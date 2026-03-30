@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="リマインダー">
+  <link rel="manifest" href="manifest.json">
+  <title>リマインダー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d1a;
+      --surface: #151528;
+      --card: #1c1c35;
+      --border: #2a2a4a;
+      --accent: #7c6af7;
+      --accent2: #f76ac8;
+      --text: #e8e8f0;
+      --muted: #7070a0;
+      --danger: #f76a6a;
+      --success: #6af7b0;
+      --dot: 3px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 300;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* グリッドのドット背景 */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, #2a2a4a 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px 100px;
+    }
+
+    /* ヘッダー */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .logo {
+      font-family: 'DotGothic16', monospace;
+      font-size: 22px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .notif-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .notif-btn.granted { color: var(--success); border-color: var(--success); }
+    .notif-btn:hover { background: var(--border); color: var(--text); }
+
+    /* 時計表示 */
+    .clock-wrap {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .clock {
+      font-family: 'DotGothic16', monospace;
+      font-size: 48px;
+      letter-spacing: 4px;
+      color: var(--text);
+      line-height: 1;
+    }
+    .clock-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* 追加フォーム */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .form-title {
+      font-family: 'DotGothic16', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input[type="text"],
+    input[type="time"],
+    select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+    select option { background: var(--surface); }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* 曜日選択（毎週用） */
+    .weekdays {
+      display: none;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .weekdays.visible { display: flex; }
+    .wd-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .wd-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .add-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      color: #fff;
+      padding: 13px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: 'DotGothic16', monospace;
+      letter-spacing: 2px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 4px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .add-btn:hover { opacity: 0.9; }
+    .add-btn:active { transform: scale(0.98); }
+
+    /* セクションヘッダー */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-head h2 {
+      font-family: 'DotGothic16', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+    .section-head .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .count-badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-family: 'DotGothic16', monospace;
+    }
+
+    /* リマインダーカード */
+    .reminder-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .reminder-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.2s, opacity 0.3s;
+      animation: slideIn 0.3s ease;
+    }
+    .reminder-card:hover { border-color: var(--accent); }
+    .reminder-card.done { opacity: 0.4; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reminder-card.firing {
+      border-color: var(--accent2);
+      box-shadow: 0 0 16px rgba(247, 106, 200, 0.3);
+      animation: pulse 0.8s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 16px rgba(247, 106, 200, 0.3); }
+      50% { box-shadow: 0 0 28px rgba(247, 106, 200, 0.6); }
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 11px;
+      transition: background 0.2s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      top: 3px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-switch input:checked + .slider { background: var(--accent); }
+    .toggle-switch input:checked + .slider::before {
+      transform: translateX(18px);
+      background: #fff;
+    }
+
+    .reminder-info { flex: 1; min-width: 0; }
+    .reminder-label {
+      font-size: 15px;
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reminder-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .reminder-time {
+      font-family: 'DotGothic16', monospace;
+      font-size: 16px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    .repeat-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .repeat-tag.daily { border-color: var(--accent); color: var(--accent); }
+    .repeat-tag.weekly { border-color: var(--accent2); color: var(--accent2); }
+
+    .del-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .del-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* 空状態 */
+    .empty-state {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state p { font-size: 13px; line-height: 1.8; }
+
+    /* トースト通知 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-family: 'DotGothic16', monospace;
+      letter-spacing: 1px;
+      z-index: 9999;
+      transition: transform 0.3s ease;
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* インストールバナー */
+    .install-banner {
+      background: linear-gradient(135deg, rgba(124,106,247,0.15), rgba(247,106,200,0.15));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+    .install-banner.visible { display: flex; }
+    .install-banner p { flex: 1; font-size: 13px; color: var(--muted); }
+    .install-banner strong { color: var(--text); }
+    .install-btn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'DotGothic16', monospace;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="logo">REMINDER</div>
+      <button class="notif-btn" id="notifBtn" onclick="requestNotif()">🔔 通知を許可</button>
+    </div>
+
+    <div class="clock-wrap">
+      <div class="clock" id="clock">00:00</div>
+      <div class="clock-date" id="clockDate"></div>
+    </div>
+
+    <!-- インストールバナー -->
+    <div class="install-banner" id="installBanner">
+      <p><strong>ホーム画面に追加</strong>するとより便利に使えます</p>
+      <button class="install-btn" onclick="installApp()">追加</button>
+    </div>
+
+    <!-- 追加フォーム -->
+    <div class="form-card">
+      <div class="form-title">// NEW REMINDER</div>
+      <div class="input-row">
+        <input type="text" id="labelInput" placeholder="リマインダーの内容" maxlength="40">
+        <div class="row2">
+          <input type="time" id="timeInput">
+          <select id="repeatSelect" onchange="onRepeatChange()">
+            <option value="daily">毎日</option>
+            <option value="weekly">毎週</option>
+          </select>
+        </div>
+        <div class="weekdays" id="weekdayPicker">
+          <button class="wd-btn" data-day="0" onclick="toggleDay(this)">日</button>
+          <button class="wd-btn" data-day="1" onclick="toggleDay(this)">月</button>
+          <button class="wd-btn" data-day="2" onclick="toggleDay(this)">火</button>
+          <button class="wd-btn" data-day="3" onclick="toggleDay(this)">水</button>
+          <button class="wd-btn" data-day="4" onclick="toggleDay(this)">木</button>
+          <button class="wd-btn" data-day="5" onclick="toggleDay(this)">金</button>
+          <button class="wd-btn" data-day="6" onclick="toggleDay(this)">土</button>
+        </div>
+        <button class="add-btn" onclick="addReminder()">＋ 追加</button>
+      </div>
+    </div>
+
+    <!-- リスト -->
+    <div class="section-head">
+      <h2>// LIST</h2>
+      <div class="line"></div>
+      <div class="count-badge" id="countBadge">0</div>
+    </div>
+    <div class="reminder-list" id="reminderList"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== データ管理（localStorage） =====
+    let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
+
+    function save() {
+      localStorage.setItem('reminders', JSON.stringify(reminders));
+    }
+
+    // ===== 時計 =====
+    const DAYS = ['日','月','火','水','木','金','土'];
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2,'0');
+      const m = String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('clock').textContent = `${h}:${m}`;
+      const y = now.getFullYear();
+      const mo = now.getMonth()+1;
+      const d = now.getDate();
+      document.getElementById('clockDate').textContent =
+        `${y}.${String(mo).padStart(2,'0')}.${String(d).padStart(2,'0')} ${DAYS[now.getDay()]}曜日`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ===== 通知権限 =====
+    function updateNotifBtn() {
+      const btn = document.getElementById('notifBtn');
+      if (Notification.permission === 'granted') {
+        btn.textContent = '🔔 通知ON';
+        btn.classList.add('granted');
+      } else {
+        btn.textContent = '🔕 通知を許可';
+        btn.classList.remove('granted');
+      }
+    }
+    updateNotifBtn();
+
+    async function requestNotif() {
+      if (!('Notification' in window)) { showToast('このブラウザは通知非対応です'); return; }
+      const perm = await Notification.requestPermission();
+      updateNotifBtn();
+      if (perm === 'granted') {
+        showToast('通知が有効になりました！');
+        registerSW();
+      } else {
+        showToast('通知が許可されませんでした');
+      }
+    }
+
+    // ===== Service Worker登録 =====
+    async function registerSW() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        console.log('SW登録成功', reg);
+      } catch(e) { console.log('SW登録失敗', e); }
+    }
+
+    // ページ読み込み時にSW登録（通知許可済みなら）
+    window.addEventListener('load', () => {
+      if (Notification.permission === 'granted') registerSW();
+    });
+
+    // ===== 曜日選択 =====
+    function onRepeatChange() {
+      const val = document.getElementById('repeatSelect').value;
+      const picker = document.getElementById('weekdayPicker');
+      if (val === 'weekly') picker.classList.add('visible');
+      else picker.classList.remove('visible');
+    }
+
+    function toggleDay(btn) {
+      btn.classList.toggle('active');
+    }
+
+    function getSelectedDays() {
+      return [...document.querySelectorAll('.wd-btn.active')].map(b => parseInt(b.dataset.day));
+    }
+
+    // ===== リマインダー追加 =====
+    function addReminder() {
+      const label = document.getElementById('labelInput').value.trim();
+      const time = document.getElementById('timeInput').value;
+      const repeat = document.getElementById('repeatSelect').value;
+
+      if (!label) { showToast('内容を入力してください'); return; }
+      if (!time) { showToast('時刻を設定してください'); return; }
+      if (repeat === 'weekly' && getSelectedDays().length === 0) {
+        showToast('曜日を選択してください'); return;
+      }
+
+      const r = {
+        id: Date.now(),
+        label,
+        time,
+        repeat,
+        days: repeat === 'weekly' ? getSelectedDays() : [],
+        enabled: true
+      };
+
+      reminders.unshift(r);
+      save();
+      render();
+      scheduleCheck();
+
+      document.getElementById('labelInput').value = '';
+      document.getElementById('timeInput').value = '';
+      document.querySelectorAll('.wd-btn').forEach(b => b.classList.remove('active'));
+
+      showToast('リマインダーを追加しました！');
+    }
+
+    // ===== 削除・トグル =====
+    function deleteReminder(id) {
+      reminders = reminders.filter(r => r.id !== id);
+      save();
+      render();
+      showToast('削除しました');
+    }
+
+    function toggleReminder(id) {
+      const r = reminders.find(r => r.id === id);
+      if (r) { r.enabled = !r.enabled; save(); render(); }
+    }
+
+    // ===== 描画 =====
+    function render() {
+      const list = document.getElementById('reminderList');
+      document.getElementById('countBadge').textContent = reminders.length;
+
+      if (reminders.length === 0) {
+        list.innerHTML = `<div class="empty-state">
+          <div class="icon">⏰</div>
+          <p>リマインダーがありません<br>上のフォームから追加してください</p>
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = reminders.map(r => {
+        const tag = r.repeat === 'daily'
+          ? '<span class="repeat-tag daily">毎日</span>'
+          : `<span class="repeat-tag weekly">毎週 ${r.days.map(d=>DAYS[d]).join('・')}</span>`;
+
+        return `<div class="reminder-card ${r.enabled ? '' : 'done'}" id="card-${r.id}">
+          <label class="toggle-switch">
+            <input type="checkbox" ${r.enabled ? 'checked' : ''} onchange="toggleReminder(${r.id})">
+            <div class="slider"></div>
+          </label>
+          <div class="reminder-info">
+            <div class="reminder-label">${escapeHtml(r.label)}</div>
+            <div class="reminder-meta">
+              <span class="reminder-time">${r.time}</span>
+              ${tag}
+            </div>
+          </div>
+          <button class="del-btn" onclick="deleteReminder(${r.id})">✕</button>
+        </div>`;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ===== 通知チェック =====
+    let lastNotified = JSON.parse(localStorage.getItem('lastNotified') || '{}');
+
+    function scheduleCheck() {
+      checkReminders();
+    }
+
+    function checkReminders() {
+      if (Notification.permission !== 'granted') return;
+      const now = new Date();
+      const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const today = now.getDay();
+      const dateKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+
+      reminders.forEach(r => {
+        if (!r.enabled) return;
+        if (r.time !== hm) return;
+
+        const key = `${r.id}_${dateKey}_${hm}`;
+        if (lastNotified[key]) return;
+
+        const shouldFire = r.repeat === 'daily' || (r.repeat === 'weekly' && r.days.includes(today));
+        if (!shouldFire) return;
+
+        lastNotified[key] = true;
+        localStorage.setItem('lastNotified', JSON.stringify(lastNotified));
+
+        // ブラウザ通知
+        new Notification('⏰ ' + r.label, {
+          body: `${r.time} のリマインダーです`,
+          icon: 'icon-192.png',
+          badge: 'icon-192.png',
+          tag: String(r.id),
+          requireInteraction: true
+        });
+
+        // カードをハイライト
+        const card = document.getElementById('card-'+r.id);
+        if (card) {
+          card.classList.add('firing');
+          setTimeout(() => card.classList.remove('firing'), 10000);
+        }
+
+        showToast('⏰ ' + r.label);
+      });
+    }
+
+    // 1分ごとにチェック
+    setInterval(checkReminders, 30000);
+    checkReminders();
+
+    // ===== トースト =====
+    let toastTimer;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // ===== PWAインストール =====
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBanner').classList.add('visible');
+    });
+
+    async function installApp() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('installBanner').classList.remove('visible');
+      if (outcome === 'accepted') showToast('ホーム画面に追加しました！');
+    }
+
+    // ===== 初期描画 =====
+    render();
+    // デフォルト時刻を現在時刻+5分に設定
+    const now = new Date(); now.setMinutes(now.getMinutes()+5);
+    document.getElementById('timeInput').value =
+      `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  </script>
+</body>
+</html>
