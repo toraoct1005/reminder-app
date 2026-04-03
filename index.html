@@ -631,8 +631,8 @@ function setMonthlyType(btn) {
   document.querySelectorAll('.mtype-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   monthlyType = btn.dataset.mtype;
-  document.getElementById('monthlyDatePicker').style.display = monthlyType === 'date' ? '' : 'none';
-  document.getElementById('monthlyNthPicker').style.display = monthlyType === 'nth' ? '' : 'none';
+  document.getElementById('monthlyDatePicker').style.display = monthlyType === 'date' ? 'block' : 'none';
+  document.getElementById('monthlyNthPicker').style.display = monthlyType === 'nth' ? 'block' : 'none';
 }
 
 // 第N週選択取得
