@@ -585,12 +585,11 @@ async function requestNotif() {
   if (perm === 'granted') {
     showToast('通知が有効になりました！');
     await registerSW();
-    // テスト通知を3秒後に送信
     setTimeout(() => {
-      new Notification('🔔 リマインダー', {
+      showPersistentNotification('🔔 リマインダー', {
         body: '通知のテストです。正常に動作しています！',
-        icon: 'icon-192.png',
-        badge: 'icon-192.png',
+        icon: '/reminder-app/icon-192.png',
+        badge: '/reminder-app/icon-192.png',
         requireInteraction: false
       });
     }, 3000);
@@ -602,10 +601,20 @@ async function requestNotif() {
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   try {
-    const reg = await navigator.serviceWorker.register('sw.js');
+    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
     console.log('SW登録成功');
     return reg;
   } catch(e) { console.log('SW登録失敗', e); }
+}
+
+// ServiceWorker経由の通知（モバイルChromeで動作）
+async function showPersistentNotification(title, options = {}) {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification(title, options);
+  } catch(e) {
+    new Notification(title, options);
+  }
 }
 
 window.addEventListener('load', async () => {
@@ -768,10 +777,10 @@ function checkReminders() {
     lastNotified[key] = true;
     localStorage.setItem('lastNotified', JSON.stringify(lastNotified));
 
-    new Notification('⏰ ' + r.label, {
+    showPersistentNotification('⏰ ' + r.label, {
       body: r.time + ' のリマインダーです',
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
+      icon: '/reminder-app/icon-192.png',
+      badge: '/reminder-app/icon-192.png',
       tag: String(r.id),
       requireInteraction: true,
       vibrate: [200, 100, 200]
