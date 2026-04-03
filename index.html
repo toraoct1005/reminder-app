@@ -76,13 +76,16 @@
     }
     .notif-btn.granted { color: var(--success); border-color: var(--success); }
     .notif-btn:hover { background: var(--border); color: var(--text); }
+
     .clock-wrap { text-align: center; margin-bottom: 20px; }
     .clock { font-family: 'DotGothic16', monospace; font-size: 44px; letter-spacing: 4px; color: var(--text); line-height: 1; }
     .clock-date { font-size: 12px; color: var(--muted); margin-top: 6px; letter-spacing: 1px; }
+
     .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px; }
     .form-title { font-family: 'DotGothic16', monospace; font-size: 12px; color: var(--accent); letter-spacing: 2px; margin-bottom: 14px; }
     .input-row { display: flex; flex-direction: column; gap: 10px; }
-    input[type="text"], input[type="time"], select {
+
+    input[type="text"], select {
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
@@ -97,12 +100,87 @@
     input:focus, select:focus { border-color: var(--accent); }
     input::placeholder { color: var(--muted); }
     select option { background: var(--surface); }
+
     .char-count { text-align: right; font-size: 11px; color: var(--muted); margin-top: 4px; }
     .char-count.warn { color: var(--accent2); }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .label-sm { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-family: 'DotGothic16', monospace; letter-spacing: 1px; }
+
+    /* ドラム式時間ピッカー */
+    .time-picker {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 120px;
+      overflow: hidden;
+      position: relative;
+    }
+    .time-picker::before, .time-picker::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 36px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .time-picker::before { top: 0; background: linear-gradient(to bottom, var(--surface), transparent); }
+    .time-picker::after { bottom: 0; background: linear-gradient(to top, var(--surface), transparent); }
+    .time-picker .selector-line {
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 36px;
+      border-top: 1px solid var(--accent);
+      border-bottom: 1px solid var(--accent);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .drum-col {
+      width: 56px;
+      height: 120px;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      position: relative;
+    }
+    .drum-col::-webkit-scrollbar { display: none; }
+    .drum-item {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DotGothic16', monospace;
+      font-size: 20px;
+      color: var(--muted);
+      scroll-snap-align: center;
+      cursor: pointer;
+      transition: color 0.1s;
+      user-select: none;
+    }
+    .drum-item.selected { color: var(--text); }
+    .drum-sep {
+      font-family: 'DotGothic16', monospace;
+      font-size: 24px;
+      color: var(--accent);
+      padding-bottom: 4px;
+      flex-shrink: 0;
+    }
+    .drum-pad { height: 42px; flex-shrink: 0; }
+
+    /* 繰り返しオプション */
     .repeat-options { display: none; flex-direction: column; gap: 10px; }
     .repeat-options.visible { display: flex; }
-    .label-sm { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-family: 'DotGothic16', monospace; letter-spacing: 1px; }
+    .monthly-options { display: none; flex-direction: column; gap: 10px; }
+    .monthly-options.visible { display: flex; }
+
+    /* 曜日ボタン */
     .weekdays { display: flex; gap: 5px; flex-wrap: wrap; }
     .wd-btn {
       background: var(--surface);
@@ -117,8 +195,8 @@
       flex-shrink: 0;
     }
     .wd-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .monthly-options { display: none; flex-direction: column; gap: 10px; }
-    .monthly-options.visible { display: flex; }
+
+    /* 毎月カスタム */
     .monthly-type-btns { display: flex; gap: 8px; }
     .mtype-btn {
       flex: 1;
@@ -134,35 +212,67 @@
       transition: all 0.2s;
     }
     .mtype-btn.active { background: var(--accent3); border-color: var(--accent3); color: #0d0d1a; font-weight: 500; }
+
+    /* 第N週複数選択 */
+    .nth-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nth-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .nth-label {
+      font-size: 11px;
+      color: var(--muted);
+      width: 36px;
+      flex-shrink: 0;
+      font-family: 'DotGothic16', monospace;
+    }
+    .nth-days {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .nth-day-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .nth-day-btn.active { background: var(--accent3); border-color: var(--accent3); color: #0d0d1a; }
+
     .add-btn {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      color: #fff;
-      padding: 13px;
-      border-radius: 10px;
+      border: none; color: #fff;
+      padding: 13px; border-radius: 10px;
       font-size: 15px;
       font-family: 'DotGothic16', monospace;
       letter-spacing: 2px;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 4px;
+      cursor: pointer; width: 100%; margin-top: 4px;
       transition: opacity 0.2s, transform 0.1s;
     }
     .add-btn:hover { opacity: 0.9; }
     .add-btn:active { transform: scale(0.98); }
+
     .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
     .section-head h2 { font-family: 'DotGothic16', monospace; font-size: 12px; letter-spacing: 2px; color: var(--muted); white-space: nowrap; }
     .section-head .line { flex: 1; height: 1px; background: var(--border); }
     .count-badge { background: var(--accent); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-family: 'DotGothic16', monospace; }
+
     .reminder-list { display: flex; flex-direction: column; gap: 10px; }
     .reminder-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px;
+      display: flex; align-items: center; gap: 12px;
       transition: border-color 0.2s, opacity 0.3s;
       animation: slideIn 0.3s ease;
     }
@@ -174,20 +284,19 @@
       0%,100% { box-shadow: 0 0 16px rgba(247,106,200,0.3); }
       50% { box-shadow: 0 0 28px rgba(247,106,200,0.6); }
     }
+
     .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; inset: 0; background: var(--border); border-radius: 11px; transition: background 0.2s; }
     .slider::before {
-      content: '';
-      position: absolute;
-      width: 16px; height: 16px;
-      left: 3px; top: 3px;
-      background: var(--muted);
-      border-radius: 50%;
+      content: ''; position: absolute;
+      width: 16px; height: 16px; left: 3px; top: 3px;
+      background: var(--muted); border-radius: 50%;
       transition: transform 0.2s, background 0.2s;
     }
     .toggle-switch input:checked + .slider { background: var(--accent); }
     .toggle-switch input:checked + .slider::before { transform: translateX(18px); background: #fff; }
+
     .reminder-info { flex: 1; min-width: 0; }
     .reminder-label { font-size: 14px; font-weight: 400; word-break: break-all; line-height: 1.4; }
     .reminder-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
@@ -196,6 +305,7 @@
     .repeat-tag.daily { border-color: var(--accent); color: var(--accent); }
     .repeat-tag.weekly { border-color: var(--accent2); color: var(--accent2); }
     .repeat-tag.monthly { border-color: var(--accent3); color: var(--accent3); }
+
     .del-btn {
       background: none; border: 1px solid transparent; color: var(--muted);
       width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
@@ -203,9 +313,11 @@
       transition: all 0.2s; flex-shrink: 0;
     }
     .del-btn:hover { border-color: var(--danger); color: var(--danger); }
+
     .empty-state { text-align: center; padding: 36px 0; color: var(--muted); }
     .empty-state .icon { font-size: 36px; margin-bottom: 10px; opacity: 0.5; }
     .empty-state p { font-size: 13px; line-height: 1.8; }
+
     .toast {
       position: fixed; bottom: 20px; left: 50%;
       transform: translateX(-50%) translateY(80px);
@@ -216,6 +328,7 @@
       white-space: nowrap; max-width: 90vw; text-align: center;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
+
     .install-banner {
       background: linear-gradient(135deg, rgba(124,106,247,0.15), rgba(247,106,200,0.15));
       border: 1px solid var(--border); border-radius: 14px;
@@ -252,8 +365,24 @@
         <input type="text" id="labelInput" placeholder="リマインダーの内容（最大80文字）" maxlength="80" oninput="updateCharCount()">
         <div class="char-count" id="charCount">0 / 80</div>
       </div>
-      <div class="row2">
-        <input type="time" id="timeInput">
+
+      <!-- ドラム式時間ピッカー -->
+      <div>
+        <div class="label-sm">// 時刻</div>
+        <div class="time-picker">
+          <div class="selector-line"></div>
+          <div class="drum-col" id="drumH">
+            <div class="drum-pad"></div>
+          </div>
+          <div class="drum-sep">:</div>
+          <div class="drum-col" id="drumM">
+            <div class="drum-pad"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="label-sm">// 繰り返し</div>
         <select id="repeatSelect" onchange="onRepeatChange()">
           <option value="daily">毎日</option>
           <option value="weekly">毎週</option>
@@ -263,7 +392,7 @@
 
       <!-- 毎週オプション -->
       <div class="repeat-options" id="weeklyOptions">
-        <div class="label-sm">// 曜日を選択</div>
+        <div class="label-sm">// 曜日を選択（複数可）</div>
         <div class="weekdays">
           <button class="wd-btn" data-day="0" onclick="toggleDay(this)">日</button>
           <button class="wd-btn" data-day="1" onclick="toggleDay(this)">月</button>
@@ -277,37 +406,20 @@
 
       <!-- 毎月オプション -->
       <div class="monthly-options" id="monthlyOptions">
-        <div class="label-sm">// 毎月の種類を選択</div>
+        <div class="label-sm">// 毎月の種類</div>
         <div class="monthly-type-btns">
           <button class="mtype-btn active" data-mtype="date" onclick="setMonthlyType(this)">日付指定</button>
           <button class="mtype-btn" data-mtype="nth" onclick="setMonthlyType(this)">第N週指定</button>
         </div>
+        <!-- 日付指定 -->
         <div id="monthlyDatePicker">
           <div class="label-sm">// 何日</div>
-          <select id="monthlyDate">
-            <option value="last">末日</option>
-          </select>
+          <select id="monthlyDate"></select>
         </div>
+        <!-- 第N週複数選択 -->
         <div id="monthlyNthPicker" style="display:none">
-          <div class="label-sm">// 第N週・曜日</div>
-          <div class="row2">
-            <select id="monthlyNth">
-              <option value="1">第1週</option>
-              <option value="2">第2週</option>
-              <option value="3">第3週</option>
-              <option value="4">第4週</option>
-              <option value="-1">最終週</option>
-            </select>
-            <select id="monthlyNthDay">
-              <option value="0">日曜</option>
-              <option value="1">月曜</option>
-              <option value="2">火曜</option>
-              <option value="3">水曜</option>
-              <option value="4">木曜</option>
-              <option value="5">金曜</option>
-              <option value="6">土曜</option>
-            </select>
-          </div>
+          <div class="label-sm">// 第N週・曜日（複数選択可）</div>
+          <div class="nth-grid" id="nthGrid"></div>
         </div>
       </div>
 
@@ -328,15 +440,108 @@
 <script>
 const DAYS = ['日','月','火','水','木','金','土'];
 const NTH_LABELS = {'1':'第1','2':'第2','3':'第3','4':'第4','-1':'最終'};
+const NTH_KEYS = ['1','2','3','4','-1'];
 
 // 日付セレクト生成
 const dateSelect = document.getElementById('monthlyDate');
+const lastOpt = document.createElement('option');
+lastOpt.value = 'last'; lastOpt.textContent = '末日';
+dateSelect.appendChild(lastOpt);
 for (let i = 1; i <= 31; i++) {
   const opt = document.createElement('option');
   opt.value = i; opt.textContent = i + '日';
   dateSelect.appendChild(opt);
 }
 
+// 第N週グリッド生成
+const nthGrid = document.getElementById('nthGrid');
+NTH_KEYS.forEach(nth => {
+  const row = document.createElement('div');
+  row.className = 'nth-row';
+  const lbl = document.createElement('div');
+  lbl.className = 'nth-label';
+  lbl.textContent = NTH_LABELS[nth];
+  row.appendChild(lbl);
+  const days = document.createElement('div');
+  days.className = 'nth-days';
+  DAYS.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nth-day-btn';
+    btn.textContent = d;
+    btn.dataset.nth = nth;
+    btn.dataset.day = i;
+    btn.onclick = () => btn.classList.toggle('active');
+    days.appendChild(btn);
+  });
+  row.appendChild(days);
+  nthGrid.appendChild(row);
+});
+
+// ドラム式時間ピッカー
+function buildDrum(colEl, count, pad) {
+  for (let i = 0; i < count; i++) {
+    const item = document.createElement('div');
+    item.className = 'drum-item';
+    item.textContent = String(i).padStart(pad, '0');
+    item.dataset.val = i;
+    colEl.appendChild(item);
+  }
+  const padEnd = document.createElement('div');
+  padEnd.className = 'drum-pad';
+  colEl.appendChild(padEnd);
+}
+
+const drumH = document.getElementById('drumH');
+const drumM = document.getElementById('drumM');
+buildDrum(drumH, 24, 2);
+buildDrum(drumM, 60, 2);
+
+function getSelectedVal(col) {
+  const items = col.querySelectorAll('.drum-item');
+  const colRect = col.getBoundingClientRect();
+  const centerY = colRect.top + colRect.height / 2;
+  let closest = 0, minDist = Infinity;
+  items.forEach((item, i) => {
+    const r = item.getBoundingClientRect();
+    const dist = Math.abs(r.top + r.height/2 - centerY);
+    if (dist < minDist) { minDist = dist; closest = i; }
+  });
+  return closest;
+}
+
+function updateDrumHighlight(col) {
+  const val = getSelectedVal(col);
+  col.querySelectorAll('.drum-item').forEach((item, i) => {
+    item.classList.toggle('selected', i === val);
+  });
+}
+
+function scrollToVal(col, val) {
+  const itemH = 36;
+  col.scrollTop = val * itemH;
+}
+
+// 初期値：現在時刻+5分
+const initTime = new Date();
+initTime.setMinutes(initTime.getMinutes() + 5);
+setTimeout(() => {
+  scrollToVal(drumH, initTime.getHours());
+  scrollToVal(drumM, initTime.getMinutes());
+  updateDrumHighlight(drumH);
+  updateDrumHighlight(drumM);
+}, 100);
+
+[drumH, drumM].forEach(col => {
+  col.addEventListener('scroll', () => updateDrumHighlight(col), { passive: true });
+});
+
+function getTimeValue() {
+  const h = String(getSelectedVal(drumH)).padStart(2, '0');
+  const m = String(getSelectedVal(drumM)).padStart(2, '0');
+  return h + ':' + m;
+}
+
+// データ
 let reminders = JSON.parse(localStorage.getItem('reminders') || '[]');
 function save() { localStorage.setItem('reminders', JSON.stringify(reminders)); }
 
@@ -347,6 +552,7 @@ function updateCharCount() {
   el.classList.toggle('warn', v > 64);
 }
 
+// 時計
 const DAYS_JP = ['日','月','火','水','木','金','土'];
 function updateClock() {
   const now = new Date();
@@ -360,6 +566,7 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
+// 通知
 function updateNotifBtn() {
   const btn = document.getElementById('notifBtn');
   if (Notification.permission === 'granted') {
@@ -372,18 +579,42 @@ updateNotifBtn();
 
 async function requestNotif() {
   if (!('Notification' in window)) { showToast('このブラウザは通知非対応です'); return; }
+  if (Notification.permission === 'granted') { showToast('通知はすでにONです'); return; }
   const perm = await Notification.requestPermission();
   updateNotifBtn();
-  if (perm === 'granted') { showToast('通知が有効になりました！'); registerSW(); }
-  else showToast('通知が許可されませんでした');
+  if (perm === 'granted') {
+    showToast('通知が有効になりました！');
+    await registerSW();
+    // テスト通知を3秒後に送信
+    setTimeout(() => {
+      new Notification('🔔 リマインダー', {
+        body: '通知のテストです。正常に動作しています！',
+        icon: 'icon-192.png',
+        badge: 'icon-192.png',
+        requireInteraction: false
+      });
+    }, 3000);
+  } else {
+    showToast('通知が許可されませんでした');
+  }
 }
 
 async function registerSW() {
   if (!('serviceWorker' in navigator)) return;
-  try { await navigator.serviceWorker.register('sw.js'); } catch(e) {}
+  try {
+    const reg = await navigator.serviceWorker.register('sw.js');
+    console.log('SW登録成功');
+    return reg;
+  } catch(e) { console.log('SW登録失敗', e); }
 }
-window.addEventListener('load', () => { if (Notification.permission === 'granted') registerSW(); });
 
+window.addEventListener('load', async () => {
+  if (Notification.permission === 'granted') {
+    await registerSW();
+  }
+});
+
+// 繰り返し切り替え
 function onRepeatChange() {
   const val = document.getElementById('repeatSelect').value;
   document.getElementById('weeklyOptions').classList.toggle('visible', val === 'weekly');
@@ -404,14 +635,26 @@ function setMonthlyType(btn) {
   document.getElementById('monthlyNthPicker').style.display = monthlyType === 'nth' ? '' : 'none';
 }
 
+// 第N週選択取得
+function getSelectedNthCombos() {
+  const combos = [];
+  document.querySelectorAll('.nth-day-btn.active').forEach(btn => {
+    combos.push({ nth: btn.dataset.nth, day: parseInt(btn.dataset.day) });
+  });
+  return combos;
+}
+
+// 追加
 function addReminder() {
   const label = document.getElementById('labelInput').value.trim();
-  const time = document.getElementById('timeInput').value;
+  const time = getTimeValue();
   const repeat = document.getElementById('repeatSelect').value;
 
   if (!label) { showToast('内容を入力してください'); return; }
-  if (!time) { showToast('時刻を設定してください'); return; }
   if (repeat === 'weekly' && getSelectedDays().length === 0) { showToast('曜日を選択してください'); return; }
+  if (repeat === 'monthly' && monthlyType === 'nth' && getSelectedNthCombos().length === 0) {
+    showToast('第N週・曜日を選択してください'); return;
+  }
 
   const r = { id: Date.now(), label, time, repeat, enabled: true };
 
@@ -422,8 +665,7 @@ function addReminder() {
     if (monthlyType === 'date') {
       r.monthlyDate = document.getElementById('monthlyDate').value;
     } else {
-      r.monthlyNth = parseInt(document.getElementById('monthlyNth').value);
-      r.monthlyNthDay = parseInt(document.getElementById('monthlyNthDay').value);
+      r.nthCombos = getSelectedNthCombos();
     }
   }
 
@@ -431,7 +673,7 @@ function addReminder() {
   save(); render(); checkReminders();
   document.getElementById('labelInput').value = '';
   updateCharCount();
-  document.querySelectorAll('.wd-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.wd-btn, .nth-day-btn').forEach(b => b.classList.remove('active'));
   showToast('リマインダーを追加しました！');
 }
 
@@ -452,8 +694,9 @@ function buildTag(r) {
     if (r.monthlyType === 'date') {
       const d = r.monthlyDate === 'last' ? '末日' : r.monthlyDate + '日';
       return '<span class="repeat-tag monthly">毎月' + d + '</span>';
-    } else {
-      return '<span class="repeat-tag monthly">毎月' + NTH_LABELS[String(r.monthlyNth)] + DAYS[r.monthlyNthDay] + '曜</span>';
+    } else if (r.nthCombos) {
+      const labels = r.nthCombos.map(c => NTH_LABELS[c.nth] + DAYS[c.day] + '曜').join('・');
+      return '<span class="repeat-tag monthly">毎月 ' + labels + '</span>';
     }
   }
   return '';
@@ -482,6 +725,7 @@ function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// 通知チェック
 let lastNotified = JSON.parse(localStorage.getItem('lastNotified') || '{}');
 
 function shouldFireMonthly(r, now) {
@@ -491,14 +735,17 @@ function shouldFireMonthly(r, now) {
       return now.getDate() === last;
     }
     return now.getDate() === parseInt(r.monthlyDate);
-  } else {
-    if (now.getDay() !== r.monthlyNthDay) return false;
-    if (r.monthlyNth === -1) {
-      const next = new Date(now); next.setDate(now.getDate()+7);
-      return next.getMonth() !== now.getMonth();
-    }
-    return Math.ceil(now.getDate() / 7) === r.monthlyNth;
+  } else if (r.nthCombos) {
+    return r.nthCombos.some(c => {
+      if (now.getDay() !== c.day) return false;
+      if (c.nth === '-1') {
+        const next = new Date(now); next.setDate(now.getDate()+7);
+        return next.getMonth() !== now.getMonth();
+      }
+      return Math.ceil(now.getDate() / 7) === parseInt(c.nth);
+    });
   }
+  return false;
 }
 
 function checkReminders() {
@@ -523,8 +770,11 @@ function checkReminders() {
 
     new Notification('⏰ ' + r.label, {
       body: r.time + ' のリマインダーです',
-      icon: 'icon-192.png', badge: 'icon-192.png',
-      tag: String(r.id), requireInteraction: true
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      tag: String(r.id),
+      requireInteraction: true,
+      vibrate: [200, 100, 200]
     });
 
     const card = document.getElementById('card-'+r.id);
@@ -533,7 +783,7 @@ function checkReminders() {
   });
 }
 
-setInterval(checkReminders, 30000);
+setInterval(checkReminders, 15000);
 checkReminders();
 
 let toastTimer;
@@ -559,8 +809,6 @@ async function installApp() {
 }
 
 render();
-const _n = new Date(); _n.setMinutes(_n.getMinutes()+5);
-document.getElementById('timeInput').value = String(_n.getHours()).padStart(2,'0') + ':' + String(_n.getMinutes()).padStart(2,'0');
 </script>
 </body>
 </html>
